@@ -33,7 +33,15 @@ export async function isAdmin(): Promise<boolean> {
     // 방법 2: Clerk Session Claims 확인
     // Clerk 대시보드에서 Session Token에 커스텀 claim을 추가한 경우
     const { sessionClaims } = await auth();
-    if (sessionClaims?.metadata?.role === "admin") {
+    if (
+      sessionClaims &&
+      typeof sessionClaims === "object" &&
+      "metadata" in sessionClaims &&
+      sessionClaims.metadata &&
+      typeof sessionClaims.metadata === "object" &&
+      "role" in sessionClaims.metadata &&
+      sessionClaims.metadata.role === "admin"
+    ) {
       return true;
     }
 

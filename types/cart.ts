@@ -1,0 +1,32 @@
+/**
+ * @file cart.ts
+ * @description 장바구니 관련 TypeScript 타입 정의
+ *
+ * Supabase cart_items 테이블과 products 테이블을 JOIN한 결과 타입을 정의합니다.
+ */
+
+import { Product } from "./product";
+
+/**
+ * 장바구니 아이템 타입 (cart_items + products JOIN)
+ */
+export interface CartItem {
+  id: string; // cart_items.id
+  clerk_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  // products 테이블의 정보
+  product: Product;
+}
+
+/**
+ * 장바구니 요약 정보
+ */
+export interface CartSummary {
+  totalItems: number; // 총 아이템 개수
+  totalQuantity: number; // 총 수량
+  totalAmount: number; // 총 금액
+}
+

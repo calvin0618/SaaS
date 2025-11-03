@@ -51,7 +51,7 @@ export async function updateProduct(
       console.groupEnd();
       return {
         success: false,
-        error: adminCheck.error,
+        error: "error" in adminCheck ? adminCheck.error : "관리자 권한이 필요합니다.",
       };
     }
 

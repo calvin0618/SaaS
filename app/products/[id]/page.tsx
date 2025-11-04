@@ -24,6 +24,8 @@ import { getProduct } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { AddToCart } from "@/components/add-to-cart";
 import { ArrowLeft } from "lucide-react";
+import { formatPrice, getCategoryLabel, formatDate } from "@/lib/utils/format";
+import { logger } from "@/lib/utils/logger";
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -59,31 +61,15 @@ function getStockStatus(stockQuantity: number) {
  * @param category 카테고리 값 (영문)
  * @returns 한글 레이블 또는 "기타" (NULL인 경우)
  */
-function getCategoryLabel(category: string | null): string {
-  const categoryMap: Record<string, string> = {
-    electronics: "전자제품",
-    clothing: "의류",
-    books: "도서",
-    food: "식품",
-    sports: "스포츠",
-    beauty: "뷰티",
-    home: "생활/가정",
-  };
-
-  if (!category) {
-    return "기타";
-  }
-
-  return categoryMap[category] || category;
-}
+// getCategoryLabel은 lib/utils/format.ts로 이동
 
 export default async function ProductDetailPage({
   params,
 }: ProductDetailPageProps) {
   const { id } = await params;
 
-  console.group("[ProductDetailPage] 상품 상세 페이지 로드");
-  console.log("상품 ID:", id);
+  logger.group("[ProductDetailPage] 상품 상세 페이지 로드");
+  logger.log("상품 ID:", id);
 
   let product = null;
   let hasError = false;
@@ -95,10 +81,10 @@ export default async function ProductDetailPage({
     hasError = true;
     errorMessage =
       error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
-    console.error("[ProductDetailPage] 에러 발생:", error);
+    logger.error("[ProductDetailPage] 에러 발생:", error);
   }
 
-  console.groupEnd();
+  logger.groupEnd();
 
   // 상품이 없거나 비활성화된 경우 404 페이지 표시
   if (!product && !hasError) {
@@ -134,11 +120,8 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  // 가격 포맷팅 (천 단위 콤마)
-  const formattedPrice = new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-  }).format(product.price);
+  // 가격 포맷팅 (공통 함수 사용)
+  const formattedPrice = formatPrice(product.price);
 
   // 재고 상태 정보
   const stockStatus = getStockStatus(product.stock_quantity);
@@ -238,21 +221,13 @@ export default async function ProductDetailPage({
                 <div className="flex justify-between">
                   <span>등록일</span>
                   <span className="text-gray-900">
-                    {new Date(product.created_at).toLocaleDateString("ko-KR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {formatDate(product.created_at)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>수정일</span>
                   <span className="text-gray-900">
-                    {new Date(product.updated_at).toLocaleDateString("ko-KR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {formatDate(product.updated_at)}
                   </span>
                 </div>
               </div>

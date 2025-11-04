@@ -17,6 +17,7 @@ import { Product } from "@/types/product";
 import { ProductForm } from "./product-form";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { Message } from "@/components/ui/message";
 import {
   deleteProduct,
   type DeleteProductResult,
@@ -42,6 +43,7 @@ export function ProductList({ initialProducts }: ProductListProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   // 상품 목록 새로고침
   const refreshProducts = async () => {
@@ -68,14 +70,23 @@ export function ProductList({ initialProducts }: ProductListProps) {
     try {
       const result: DeleteProductResult = await deleteProduct({ id: productId });
       if (result.success) {
-        alert(result.message || "상품이 삭제되었습니다.");
+        setMessage({
+          text: result.message || "상품이 삭제되었습니다.",
+          type: "success",
+        });
         await refreshProducts();
       } else {
-        alert(result.error || "상품 삭제에 실패했습니다.");
+        setMessage({
+          text: result.error || "상품 삭제에 실패했습니다.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("상품 삭제 실패:", error);
-      alert("상품 삭제에 실패했습니다.");
+      setMessage({
+        text: "상품 삭제에 실패했습니다.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -92,11 +103,17 @@ export function ProductList({ initialProducts }: ProductListProps) {
       if (result.success) {
         await refreshProducts();
       } else {
-        alert(result.error || "상품 상태 변경에 실패했습니다.");
+        setMessage({
+          text: result.error || "상품 상태 변경에 실패했습니다.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("상품 상태 변경 실패:", error);
-      alert("상품 상태 변경에 실패했습니다.");
+      setMessage({
+        text: "상품 상태 변경에 실패했습니다.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +122,10 @@ export function ProductList({ initialProducts }: ProductListProps) {
   // 재고 수량 변경
   const handleUpdateStock = async (productId: string, newStock: number) => {
     if (newStock < 0) {
-      alert("재고 수량은 0개 이상이어야 합니다.");
+      setMessage({
+        text: "재고 수량은 0개 이상이어야 합니다.",
+        type: "error",
+      });
       return;
     }
 
@@ -118,40 +138,37 @@ export function ProductList({ initialProducts }: ProductListProps) {
       if (result.success) {
         await refreshProducts();
       } else {
-        alert(result.error || "재고 수량 변경에 실패했습니다.");
+        setMessage({
+          text: result.error || "재고 수량 변경에 실패했습니다.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("재고 수량 변경 실패:", error);
-      alert("재고 수량 변경에 실패했습니다.");
+      setMessage({
+        text: "재고 수량 변경에 실패했습니다.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 가격 포맷팅
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-    }).format(price);
-
-  // 카테고리 한글 변환
-  const getCategoryLabel = (category: string | null) => {
-    const categoryMap: Record<string, string> = {
-      electronics: "전자제품",
-      clothing: "의류",
-      books: "도서",
-      food: "식품",
-      sports: "스포츠",
-      beauty: "뷰티",
-      home: "생활/가정",
-    };
-    return category ? categoryMap[category] || category : "기타";
-  };
+  // formatPrice와 getCategoryLabel은 lib/utils/format.ts의 공통 함수 사용
 
   return (
-    <div className="space-y-6">
-      {/* 상단 액션 버튼 */}
+    <>
+      {message && (
+        <Message
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+          autoClose={true}
+          duration={3000}
+        />
+      )}
+      <div className="space-y-6">
+        {/* 상단 액션 버튼 */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Package className="w-5 h-5 text-gray-600" />
@@ -262,7 +279,11 @@ export function ProductList({ initialProducts }: ProductListProps) {
                       </button>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
-                      {new Date(product.created_at).toLocaleDateString("ko-KR")}
+                      {formatDate(product.created_at, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
@@ -315,6 +336,7 @@ export function ProductList({ initialProducts }: ProductListProps) {
         </Dialog>
       )}
     </div>
+    </>
   );
 }
 

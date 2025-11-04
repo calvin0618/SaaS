@@ -6,7 +6,13 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SyncUserProvider } from "@/components/providers/sync-user-provider";
+import { validateEnvironment } from "@/lib/utils/env";
 import "./globals.css";
+
+// 환경 변수 검증 (서버 사이드에서만 실행)
+if (typeof window === "undefined") {
+  validateEnvironment();
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

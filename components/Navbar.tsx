@@ -2,7 +2,7 @@ import { SignedOut, SignInButton, SignedIn, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, User } from "lucide-react";
 import { getCart } from "@/actions/cart/get-cart";
 
 /**
@@ -56,6 +56,14 @@ const Navbar = async () => {
           </SignInButton>
         </SignedOut>
         <SignedIn>
+          {/* 마이페이지 링크 */}
+          <Link
+            href="/my-page"
+            className="inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="마이페이지"
+          >
+            <User className="w-6 h-6 text-gray-700" />
+          </Link>
           <UserButton />
         </SignedIn>
       </div>

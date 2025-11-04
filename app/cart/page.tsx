@@ -27,6 +27,8 @@ import { getCart } from "@/actions/cart/get-cart";
 import { calculateCartSummary } from "@/lib/cart";
 import { CartItemCard } from "@/components/cart-item-card";
 import { CartItem } from "@/types/cart";
+import { formatPrice } from "@/lib/utils/format";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * 빈 장바구니 컴포넌트
@@ -60,10 +62,7 @@ function CartSummary({
   totalQuantity: number;
   totalAmount: number;
 }) {
-  const formattedTotal = new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-  }).format(totalAmount);
+  const formattedTotal = formatPrice(totalAmount);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 lg:p-8 sticky top-4">
@@ -116,7 +115,7 @@ function CartSummary({
 }
 
 export default async function CartPage() {
-  console.group("[CartPage] 장바구니 페이지 로드");
+  logger.group("[CartPage] 장바구니 페이지 로드");
 
   // 장바구니 데이터 조회
   const cartResult = await getCart();
@@ -125,8 +124,8 @@ export default async function CartPage() {
   // 장바구니 요약 계산
   const summary = calculateCartSummary(cartItems);
 
-  console.log("장바구니 아이템 개수:", cartItems.length);
-  console.groupEnd();
+  logger.log("장바구니 아이템 개수:", cartItems.length);
+  logger.groupEnd();
 
   return (
     <main className="min-h-[calc(100vh-80px)] px-4 py-8 lg:py-16">

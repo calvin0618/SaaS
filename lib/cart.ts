@@ -32,10 +32,12 @@ export function calculateCartSummary(cartItems: CartItem[]): CartSummary {
 
 /**
  * 금액 포맷팅 (천 단위 콤마)
+ * @deprecated 이 함수는 lib/utils/format.ts의 formatPrice를 사용하세요.
  * @param amount 금액
  * @returns 포맷팅된 금액 문자열
  */
 export function formatPrice(amount: number): string {
+  // 하위 호환성을 위해 유지하되, 새로운 함수를 사용
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
     currency: "KRW",

@@ -13,9 +13,9 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { OrderForm, OrderFormValues } from "@/components/checkout/order-form";
+import { OrderForm, OrderFormValues, OrderFormRef } from "@/components/checkout/order-form";
 import { OrderSummary } from "@/components/checkout/order-summary";
 import { CartItem } from "@/types/cart";
 import { createOrder } from "@/actions/orders/create-order";
@@ -32,6 +32,7 @@ export function CheckoutClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<OrderFormRef>(null);
 
   const handleSubmit = (formData: OrderFormValues) => {
     setError(null);
@@ -81,7 +82,7 @@ export function CheckoutClient({
             </div>
           )}
 
-          <OrderForm onSubmit={handleSubmit} isSubmitting={isPending} />
+          <OrderForm ref={formRef} onSubmit={handleSubmit} isSubmitting={isPending} />
         </div>
       </div>
 
@@ -91,16 +92,9 @@ export function CheckoutClient({
           cartItems={initialCartItems}
           totalAmount={initialTotalAmount}
           onOrder={() => {
-            // OrderForm의 handleSubmit을 트리거하기 위해
-            // 폼의 submit 이벤트를 발생시킵니다.
-            const formRef = (window as any).__checkoutFormRef;
-            if (formRef) {
-              formRef.requestSubmit();
-            } else {
-              const form = document.querySelector("form");
-              if (form) {
-                form.requestSubmit();
-              }
+            // OrderForm의 handleSubmit을 트리거
+            if (formRef.current) {
+              formRef.current.submit();
             }
           }}
           isSubmitting={isPending}

@@ -18,12 +18,11 @@ interface ProductCardProps {
   product: Product;
 }
 
+import { formatPrice, getCategoryLabel, getStockStatusText } from "@/lib/utils/format";
+
 export function ProductCard({ product }: ProductCardProps) {
-  // 가격 포맷팅 (천 단위 콤마)
-  const formattedPrice = new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-  }).format(product.price);
+  // 가격 포맷팅 (공통 함수 사용)
+  const formattedPrice = formatPrice(product.price);
 
   // 기본 이미지 URL (스키마상 image_url 컬럼이 없으므로 placeholder 사용)
   const imageUrl =
@@ -49,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="p-4">
         {/* 카테고리 (NULL 가능) */}
         <p className="text-sm text-gray-500 mb-1">
-          {product.category ?? "기타"}
+          {getCategoryLabel(product.category)}
         </p>
 
         {/* 상품명 */}
@@ -61,14 +60,21 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-xl font-bold text-gray-900">{formattedPrice}</p>
 
         {/* 재고 상태 */}
-        {product.stock_quantity === 0 && (
-          <p className="text-sm text-red-500 mt-2">품절</p>
-        )}
-        {product.stock_quantity > 0 && product.stock_quantity < 10 && (
-          <p className="text-sm text-orange-500 mt-2">
-            재고 {product.stock_quantity}개 남음
-          </p>
-        )}
+        {(() => {
+          const stockStatus = getStockStatusText(product.stock_quantity);
+          if (!stockStatus) return null;
+          return (
+            <p
+              className={`text-sm mt-2 ${
+                product.stock_quantity === 0
+                  ? "text-red-500"
+                  : "text-orange-500"
+              }`}
+            >
+              {stockStatus}
+            </p>
+          );
+        })()}
       </div>
     </Link>
   );

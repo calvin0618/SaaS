@@ -20,6 +20,8 @@ import { ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { updateCartItemQuantity } from "@/actions/cart/update-quantity";
 import { removeCartItem } from "@/actions/cart/remove-item";
 import { CartItem } from "@/types/cart";
+import { Message } from "@/components/ui/message";
+import { formatPrice } from "@/lib/utils/format";
 
 interface CartItemCardProps {
   item: CartItem;
@@ -30,23 +32,20 @@ export function CartItemCard({ item }: CartItemCardProps) {
   const [quantity, setQuantity] = useState(item.quantity);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  const formattedPrice = new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-  }).format(item.product.price);
-
+  const formattedPrice = formatPrice(item.product.price);
   const subtotal = item.product.price * quantity;
-  const formattedSubtotal = new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-  }).format(subtotal);
+  const formattedSubtotal = formatPrice(subtotal);
 
   // 수량 증가
   const handleIncrease = async () => {
     const newQuantity = quantity + 1;
     if (newQuantity > item.product.stock_quantity) {
-      alert(`재고가 부족합니다. (최대 ${item.product.stock_quantity}개)`);
+      setMessage({
+        text: `재고가 부족합니다. (최대 ${item.product.stock_quantity}개)`,
+        type: "error",
+      });
       return;
     }
 
@@ -61,11 +60,17 @@ export function CartItemCard({ item }: CartItemCardProps) {
         setQuantity(newQuantity);
         router.refresh(); // 장바구니 페이지 새로고침
       } else {
-        alert(result.error || "수량 변경에 실패했습니다.");
+        setMessage({
+          text: result.error || "수량 변경에 실패했습니다.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("수량 변경 실패:", error);
-      alert("수량 변경에 실패했습니다.");
+      setMessage({
+        text: "수량 변경에 실패했습니다.",
+        type: "error",
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -87,11 +92,17 @@ export function CartItemCard({ item }: CartItemCardProps) {
         setQuantity(newQuantity);
         router.refresh();
       } else {
-        alert(result.error || "수량 변경에 실패했습니다.");
+        setMessage({
+          text: result.error || "수량 변경에 실패했습니다.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("수량 변경 실패:", error);
-      alert("수량 변경에 실패했습니다.");
+      setMessage({
+        text: "수량 변경에 실패했습니다.",
+        type: "error",
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -110,18 +121,34 @@ export function CartItemCard({ item }: CartItemCardProps) {
       if (result.success) {
         router.refresh();
       } else {
-        alert(result.error || "상품 삭제에 실패했습니다.");
+        setMessage({
+          text: result.error || "상품 삭제에 실패했습니다.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("상품 삭제 실패:", error);
-      alert("상품 삭제에 실패했습니다.");
+      setMessage({
+        text: "상품 삭제에 실패했습니다.",
+        type: "error",
+      });
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+    <>
+      {message && (
+        <Message
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+          autoClose={true}
+          duration={3000}
+        />
+      )}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 상품 이미지 */}
         <Link
@@ -213,6 +240,7 @@ export function CartItemCard({ item }: CartItemCardProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

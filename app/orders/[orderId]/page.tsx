@@ -23,7 +23,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Clock } from "lucide-react";
 import { getOrder } from "@/actions/orders/get-order";
-import { formatPrice } from "@/lib/cart";
+import { formatPrice, formatDateTime } from "@/lib/utils/format";
+import { logger } from "@/lib/utils/logger";
+import { CancelOrderButton } from "@/components/orders/cancel-order-button";
 
 interface OrderPageProps {
   params: Promise<{ orderId: string }>;
@@ -81,36 +83,36 @@ function OrderStatusBadge({
 export default async function OrderPage({ params }: OrderPageProps) {
   const { orderId } = await params;
 
-  console.group("[OrderPage] 주문 상세 페이지 로드");
-  console.log("주문 ID:", orderId);
+  logger.group("[OrderPage] 주문 상세 페이지 로드");
+  logger.log("주문 ID:", orderId);
 
   // 주문 조회
   const orderResult = await getOrder(orderId);
 
   if (!orderResult.success || !orderResult.data) {
-    console.error("[OrderPage] 주문 조회 실패:", orderResult.error);
-    console.groupEnd();
+    logger.error("[OrderPage] 주문 조회 실패:", orderResult.error);
+    logger.groupEnd();
     notFound();
   }
 
   const order = orderResult.data;
 
-  console.log("[OrderPage] 주문 조회 완료:", order.id);
-  console.groupEnd();
+  logger.log("[OrderPage] 주문 조회 완료:", order.id);
+  logger.groupEnd();
 
   return (
     <main className="min-h-[calc(100vh-80px)] px-4 py-8 lg:py-16">
       <div className="w-full max-w-4xl mx-auto">
         {/* 페이지 헤더 */}
         <div className="mb-6 flex items-center gap-4">
-          <Link href="/products">
+          <Link href="/my-orders">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              상품 목록으로
+              주문 내역으로
             </Button>
           </Link>
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
-            주문 완료
+            주문 상세
           </h1>
         </div>
 
@@ -184,6 +186,17 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 {order.shipping_address}
               </span>
             </div>
+            {/* 주문 메모 (있는 경우만 표시) */}
+            {order.order_note && (
+              <div className="pt-3 border-t border-gray-200">
+                <div className="flex flex-col gap-2">
+                  <span className="text-gray-600">주문 메모</span>
+                  <span className="text-gray-900 font-medium">
+                    {order.order_note}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -195,13 +208,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">주문 일시</span>
               <span className="text-gray-900">
-                {new Date(order.created_at).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatDateTime(order.created_at)}
               </span>
             </div>
             <div className="border-t border-gray-200 pt-3">
@@ -216,7 +223,12 @@ export default async function OrderPage({ params }: OrderPageProps) {
         </div>
 
         {/* 액션 버튼 */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/my-orders" className="flex-1">
+            <Button variant="outline" className="w-full" size="lg">
+              주문 내역으로
+            </Button>
+          </Link>
           <Link href="/products" className="flex-1">
             <Button variant="outline" className="w-full" size="lg">
               쇼핑 계속하기
@@ -229,14 +241,17 @@ export default async function OrderPage({ params }: OrderPageProps) {
           </Link>
         </div>
 
-        {/* 주문 상태 안내 */}
+        {/* 주문 상태 안내 및 취소 버튼 */}
         {order.status === "pending" && (
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              ⚠️ 결제 대기 중입니다. 결제를 완료하면 주문이 확정됩니다.
-              <br />
-              (Phase 4에서 결제 기능이 추가되면 여기서 결제할 수 있습니다)
-            </p>
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800 mb-3">
+                ⚠️ 결제 대기 중입니다. 결제를 완료하면 주문이 확정됩니다.
+                <br />
+                (Phase 4에서 결제 기능이 추가되면 여기서 결제할 수 있습니다)
+              </p>
+              <CancelOrderButton orderId={order.id} />
+            </div>
           </div>
         )}
       </div>

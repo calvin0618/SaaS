@@ -29,6 +29,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShoppingCart, Plus, Minus } from "lucide-react";
 import { addToCart } from "@/actions/cart/add-to-cart";
+import { Message } from "@/components/ui/message";
+import { formatPrice } from "@/lib/utils/format";
 
 interface AddToCartProps {
   productId: string;
@@ -46,6 +48,7 @@ export function AddToCart({
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   // 수량 증가
   const handleIncrease = () => {
@@ -97,11 +100,17 @@ export function AddToCart({
         // Navbar의 장바구니 개수 업데이트를 위해 페이지 새로고침
         router.refresh();
         
-        alert(result.message || `${productName} ${quantity}개가 장바구니에 추가되었습니다.`);
+        setMessage({
+          text: result.message || `${productName} ${quantity}개가 장바구니에 추가되었습니다.`,
+          type: "success",
+        });
       } else {
         console.error("[AddToCart] 장바구니 담기 실패:", result.error);
         console.groupEnd();
-        alert(result.error || "장바구니 담기에 실패했습니다.");
+        setMessage({
+          text: result.error || "장바구니 담기에 실패했습니다.",
+          type: "error",
+        });
       }
       
     } catch (error) {
@@ -110,7 +119,10 @@ export function AddToCart({
         error instanceof Error
           ? error.message
           : "알 수 없는 오류가 발생했습니다.";
-      alert(`장바구니 담기에 실패했습니다: ${errorMessage}`);
+      setMessage({
+        text: `장바구니 담기에 실패했습니다: ${errorMessage}`,
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -120,8 +132,18 @@ export function AddToCart({
   const maxQuantity = stockQuantity;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 lg:p-8 sticky top-4">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">장바구니</h2>
+    <>
+      {message && (
+        <Message
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+          autoClose={true}
+          duration={3000}
+        />
+      )}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 lg:p-8 sticky top-4">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">장바구니</h2>
 
       {/* 수량 선택 */}
       <div className="mb-6">
@@ -171,7 +193,7 @@ export function AddToCart({
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-600">총 금액</span>
           <span className="text-2xl font-bold text-gray-900">
-            {(price * quantity).toLocaleString("ko-KR")}원
+            {formatPrice(price * quantity)}
           </span>
         </div>
       </div>
@@ -211,6 +233,7 @@ export function AddToCart({
         </SignInButton>
       </SignedOut>
     </div>
+    </>
   );
 }
 

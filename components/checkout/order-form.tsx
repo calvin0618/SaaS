@@ -14,7 +14,7 @@
 
 "use client";
 
-import React from "react";
+import React, { forwardRef, useImperativeHandle } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,7 +51,12 @@ interface OrderFormProps {
   isSubmitting?: boolean;
 }
 
-export function OrderForm({ onSubmit, isSubmitting = false }: OrderFormProps) {
+export interface OrderFormRef {
+  submit: () => void;
+}
+
+export const OrderForm = forwardRef<OrderFormRef, OrderFormProps>(
+  ({ onSubmit, isSubmitting = false }, ref) => {
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
@@ -65,15 +70,12 @@ export function OrderForm({ onSubmit, isSubmitting = false }: OrderFormProps) {
   // 외부에서 폼 제출을 트리거하기 위한 ref
   const formRef = React.useRef<HTMLFormElement>(null);
 
-  // 외부에서 제출할 수 있도록 폼 ref를 전역에 노출
-  React.useEffect(() => {
-    if (formRef.current) {
-      (window as any).__checkoutFormRef = formRef.current;
-    }
-    return () => {
-      delete (window as any).__checkoutFormRef;
-    };
-  }, []);
+  // 부모 컴포넌트에서 폼 제출을 트리거할 수 있도록 ref 노출
+  useImperativeHandle(ref, () => ({
+    submit: () => {
+      form.handleSubmit(onSubmit)();
+    },
+  }), [form, onSubmit]);
 
   return (
     <Form {...form}>
@@ -154,5 +156,7 @@ export function OrderForm({ onSubmit, isSubmitting = false }: OrderFormProps) {
       </form>
     </Form>
   );
-}
+});
+
+OrderForm.displayName = "OrderForm";
 

@@ -29,6 +29,7 @@ import { ProductCard } from "@/components/product-card";
 import { CategoryFilter } from "@/components/category-filter";
 import { Product } from "@/types/product";
 import { getProducts } from "@/lib/products";
+import { logger } from "@/lib/utils/logger";
 
 interface HomeProps {
   searchParams: Promise<{ category?: string }>;
@@ -48,8 +49,8 @@ interface HomeProps {
 async function getPopularProducts(): Promise<Product[]> {
   const supabase = createClerkSupabaseClient();
 
-  console.group("[Home] 인기 상품 조회 시작");
-  console.log("Supabase 클라이언트 생성 완료");
+  logger.group("[Home] 인기 상품 조회 시작");
+  logger.log("Supabase 클라이언트 생성 완료");
 
   // 인기 상품 기준: 재고가 많고 최근 생성된 상품 (나중에 판매량 기준으로 변경 가능)
   const { data, error } = await supabase
@@ -61,29 +62,29 @@ async function getPopularProducts(): Promise<Product[]> {
     .limit(4);
 
   if (error) {
-    console.error("[Home] 인기 상품 조회 실패:", error);
-    console.groupEnd();
+    logger.error("[Home] 인기 상품 조회 실패:", error);
+    logger.groupEnd();
     
     // products 테이블이 없는 경우 특별 처리
     if (error.message?.includes("Could not find the table") || 
         error.message?.includes("relation") ||
         error.code === "PGRST116" || 
         error.code === "42P01") {
-      console.warn("[Home] products 테이블이 아직 생성되지 않았습니다.");
+      logger.warn("[Home] products 테이블이 아직 생성되지 않았습니다.");
       return [];
     }
     
     throw new Error(`인기 상품을 불러오는데 실패했습니다: ${error.message}`);
   }
 
-  console.log(`[Home] 인기 상품 ${data?.length || 0}개 조회 완료`);
-  console.groupEnd();
+  logger.log(`[Home] 인기 상품 ${data?.length || 0}개 조회 완료`);
+  logger.groupEnd();
 
   return data || [];
 }
 
 async function getHomeProducts(category?: string): Promise<Product[]> {
-  console.group("[Home] 상품 목록 조회 시작");
+  logger.group("[Home] 상품 목록 조회 시작");
   
   try {
     const result = await getProducts({
@@ -91,13 +92,13 @@ async function getHomeProducts(category?: string): Promise<Product[]> {
       limit: 12,
     });
     
-    console.log(`[Home] 상품 ${result.products.length}개 조회 완료`);
-    console.groupEnd();
+    logger.log(`[Home] 상품 ${result.products.length}개 조회 완료`);
+    logger.groupEnd();
     
     return result.products;
   } catch (error) {
-    console.error("[Home] 상품 목록 조회 실패:", error);
-    console.groupEnd();
+    logger.error("[Home] 상품 목록 조회 실패:", error);
+    logger.groupEnd();
     
     // products 테이블이 없는 경우 특별 처리
     if (
@@ -107,7 +108,7 @@ async function getHomeProducts(category?: string): Promise<Product[]> {
         error.message?.includes("PGRST116") ||
         error.message?.includes("42P01"))
     ) {
-      console.warn("[Home] products 테이블이 아직 생성되지 않았습니다.");
+      logger.warn("[Home] products 테이블이 아직 생성되지 않았습니다.");
       return [];
     }
     
@@ -133,7 +134,7 @@ export default async function Home({ searchParams }: HomeProps) {
     hasError = true;
     errorMessage =
       error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
-    console.error("[Home] 에러 발생:", error);
+    logger.error("[Home] 에러 발생:", error);
   }
 
   return (

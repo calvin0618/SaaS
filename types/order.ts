@@ -18,6 +18,7 @@ export interface Order {
   shipping_address: string; // TEXT
   shipping_name: string; // TEXT
   shipping_phone: string; // TEXT
+  order_note?: string | null; // 주문 메모 (선택사항)
   created_at: string;
   updated_at: string;
 }

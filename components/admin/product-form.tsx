@@ -15,11 +15,12 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Message } from "@/components/ui/message";
 import {
   Form,
   FormControl,
@@ -79,6 +80,7 @@ const categories = [
 
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const isEdit = !!product;
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -124,10 +126,16 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         });
 
         if (result.success) {
-          alert(result.message || "상품이 수정되었습니다.");
+          setMessage({
+            text: result.message || "상품이 수정되었습니다.",
+            type: "success",
+          });
           onSuccess?.();
         } else {
-          alert(result.error || "상품 수정에 실패했습니다.");
+          setMessage({
+            text: result.error || "상품 수정에 실패했습니다.",
+            type: "error",
+          });
         }
       } else {
         // 생성
@@ -142,22 +150,41 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         });
 
         if (result.success) {
-          alert("상품이 생성되었습니다.");
+          setMessage({
+            text: "상품이 생성되었습니다.",
+            type: "success",
+          });
           form.reset();
           onSuccess?.();
         } else {
-          alert(result.error || "상품 생성에 실패했습니다.");
+          setMessage({
+            text: result.error || "상품 생성에 실패했습니다.",
+            type: "error",
+          });
         }
       }
     } catch (error) {
       console.error("상품 저장 실패:", error);
-      alert("상품 저장에 실패했습니다.");
+      setMessage({
+        text: "상품 저장에 실패했습니다.",
+        type: "error",
+      });
     }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <>
+      {message && (
+        <Message
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+          autoClose={true}
+          duration={3000}
+        />
+      )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* 상품명 */}
         <FormField
           control={form.control}
@@ -336,6 +363,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         </div>
       </form>
     </Form>
+    </>
   );
 }
 
